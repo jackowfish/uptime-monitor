@@ -2,6 +2,11 @@
 
 A terminal-based HTTP endpoint monitor built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
+## Screenshots
+
+<img width="835" height="499" alt="Screenshot 2026-01-29 at 9 43 09 AM" src="https://github.com/user-attachments/assets/0c74c1cc-e256-4854-8853-24d2582cc646" />
+<img width="834" height="499" alt="Screenshot 2026-01-29 at 9 43 20 AM" src="https://github.com/user-attachments/assets/cb7dd294-660d-43c5-8f37-c002e5794cbd" />
+
 ## Usage
 
 ```bash

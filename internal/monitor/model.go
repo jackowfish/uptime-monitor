@@ -26,6 +26,7 @@ type Model struct {
 	LatencySum      time.Duration
 	UptimeHistory   []float64
 	LatencyHistory  []time.Duration
+	RecentResults   []bool // Rolling window of recent success/failure
 	Logs            []LogEntry
 	Quitting        bool
 	ShowHelp        bool
@@ -51,6 +52,7 @@ func NewModel(targetURL string) Model {
 		Spinner:         s,
 		UptimeHistory:   make([]float64, 0, MaxHistory),
 		LatencyHistory:  make([]time.Duration, 0, MaxLatencies),
+		RecentResults:   make([]bool, 0, UptimeWindow),
 		Logs:            make([]LogEntry, 0, MaxLogs),
 		Width:           80,
 		Height:          24,
@@ -242,7 +244,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ConsecutiveUp = 0
 		}
 
-		uptime := float64(m.SuccessReqs) / float64(m.TotalReqs) * 100
+		// Track rolling window of recent results
+		m.RecentResults = append(m.RecentResults, msg.Success)
+		if len(m.RecentResults) > UptimeWindow {
+			m.RecentResults = m.RecentResults[1:]
+		}
+
+		// Calculate uptime from rolling window (last 1000 requests)
+		recentSuccesses := 0
+		for _, success := range m.RecentResults {
+			if success {
+				recentSuccesses++
+			}
+		}
+		uptime := float64(recentSuccesses) / float64(len(m.RecentResults)) * 100
+
 		m.UptimeHistory = append(m.UptimeHistory, uptime)
 		if len(m.UptimeHistory) > MaxHistory {
 			m.UptimeHistory = m.UptimeHistory[1:]
@@ -460,7 +476,7 @@ func (m Model) renderUptimeGraph(width int) string {
 	var b strings.Builder
 
 	b.WriteString(SectionStyle.Render("  UPTIME HISTORY"))
-	b.WriteString(GraphAxisStyle.Render(fmt.Sprintf(" (%d samples)", len(m.UptimeHistory))))
+	b.WriteString(GraphAxisStyle.Render(fmt.Sprintf(" (last %d requests)", len(m.RecentResults))))
 	b.WriteString("\n")
 	b.WriteString(DividerStyle.Render("  " + strings.Repeat("─", Clamp(width-4, 1, 200))))
 	b.WriteString("\n")

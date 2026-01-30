@@ -3,12 +3,13 @@ package monitor
 import "time"
 
 const (
-	Version       = "v1.0.0"
-	CheckInterval = 500 * time.Millisecond
-	MaxHistory    = 50
-	MaxLogs       = 6
-	GraphHeight   = 5
-	MaxLatencies  = 30
+	Version        = "v1.0.0"
+	CheckInterval  = 500 * time.Millisecond
+	MaxHistory     = 1000
+	MaxLogs        = 6
+	GraphHeight    = 5
+	MaxLatencies   = 30
+	UptimeWindow   = 10000 // Rolling window for uptime calculation
 )
 
 type LogEntry struct {

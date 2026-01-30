@@ -38,6 +38,7 @@ type Model struct {
 	FollowRedirects bool
 	Timeout         time.Duration
 	Interval        time.Duration
+	Workers         int
 }
 
 func NewModel(targetURL string) Model {
@@ -59,6 +60,7 @@ func NewModel(targetURL string) Model {
 		FollowRedirects: true,
 		Timeout:         5 * time.Second,
 		Interval:        CheckInterval,
+		Workers:         1,
 	}
 }
 
@@ -142,13 +144,45 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.FollowRedirects = !m.FollowRedirects
 			return m, nil
 		case "+", "=":
-			if m.Interval < 10*time.Second {
+			if m.Interval < 10*time.Millisecond {
+				m.Interval += 1 * time.Millisecond
+			} else if m.Interval < 100*time.Millisecond {
+				m.Interval += 10 * time.Millisecond
+			} else if m.Interval < 1*time.Second {
+				m.Interval += 100 * time.Millisecond
+			} else if m.Interval < 10*time.Second {
 				m.Interval += 500 * time.Millisecond
 			}
 			return m, nil
 		case "-", "_":
-			if m.Interval > 200*time.Millisecond {
+			if m.Interval > 100*time.Millisecond {
 				m.Interval -= 100 * time.Millisecond
+			} else if m.Interval > 10*time.Millisecond {
+				m.Interval -= 10 * time.Millisecond
+			} else if m.Interval > 1*time.Millisecond {
+				m.Interval -= 1 * time.Millisecond
+			}
+			return m, nil
+		case ">", ".":
+			if m.Workers < 1000 {
+				if m.Workers < 10 {
+					m.Workers++
+				} else if m.Workers < 100 {
+					m.Workers += 10
+				} else {
+					m.Workers += 100
+				}
+			}
+			return m, nil
+		case "<", ",":
+			if m.Workers > 1 {
+				if m.Workers <= 10 {
+					m.Workers--
+				} else if m.Workers <= 100 {
+					m.Workers -= 10
+				} else {
+					m.Workers -= 100
+				}
 			}
 			return m, nil
 		case "[":
@@ -169,7 +203,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case TickMsg:
-		return m, tea.Batch(m.doCheck(), m.tickCmd())
+		cmds := make([]tea.Cmd, m.Workers+1)
+		for i := 0; i < m.Workers; i++ {
+			cmds[i] = m.doCheck()
+		}
+		cmds[m.Workers] = m.tickCmd()
+		return m, tea.Batch(cmds...)
 
 	case CheckResult:
 		m.TotalReqs++
@@ -331,7 +370,14 @@ func (m Model) renderSecondaryHeader(width int) string {
 		redirIndicator = HeaderInfoStyle.Render("redir:off")
 	}
 
-	rightInfo := fmt.Sprintf("%s │ %s │ %s │ %s │ %s %s %dms %ds",
+	// Calculate requests per second: workers * (1000ms / interval)
+	rps := float64(m.Workers) * (1000.0 / float64(m.Interval.Milliseconds()))
+	rpsStr := fmt.Sprintf("%.0f", rps)
+	if rps >= 1000 {
+		rpsStr = fmt.Sprintf("%.1fk", rps/1000)
+	}
+
+	rightInfo := fmt.Sprintf("%s │ %s │ %s │ %s │ %s %s %dms %ds %dw %s",
 		HeaderInfoStyle.Render(Version),
 		HeaderInfoStyle.Render(dateStr),
 		ValueStyle.Render(timeStr),
@@ -340,6 +386,8 @@ func (m Model) renderSecondaryHeader(width int) string {
 		redirIndicator,
 		m.Interval.Milliseconds(),
 		int(m.Timeout.Seconds()),
+		m.Workers,
+		ValueGreenStyle.Render(rpsStr+"rps"),
 	)
 
 	rightInfoPadding := SafePadding(width, lipgloss.Width(rightInfo)+2, 0)
@@ -495,6 +543,7 @@ func (m Model) renderFooter(width int) string {
 		{"f", "Redir"},
 		{"+/-", "Int"},
 		{"[/]", "Tout"},
+		{"</>", "Wrk"},
 	}
 
 	var footerParts []string
@@ -535,6 +584,7 @@ func (m Model) renderHelp(width int) string {
 		{"f", fmt.Sprintf("Toggle follow redirects [%s]", redirectStatus)},
 		{"+/-", fmt.Sprintf("Adjust check interval [%dms]", m.Interval.Milliseconds())},
 		{"[/]", fmt.Sprintf("Adjust timeout [%ds]", int(m.Timeout.Seconds()))},
+		{"</>", fmt.Sprintf("Adjust workers [%d]", m.Workers)},
 		{"", ""},
 		{"Esc", "Close help overlay"},
 	}

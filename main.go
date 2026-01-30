@@ -68,8 +68,9 @@ func printUsage() {
 	fmt.Println(subtitleStyle.Render("  ?        Show help"))
 	fmt.Println(subtitleStyle.Render("  t        Toggle TLS verification"))
 	fmt.Println(subtitleStyle.Render("  f        Toggle follow redirects"))
-	fmt.Println(subtitleStyle.Render("  +/-      Adjust check interval"))
+	fmt.Println(subtitleStyle.Render("  +/-      Adjust check interval (min 1ms)"))
 	fmt.Println(subtitleStyle.Render("  [/]      Adjust timeout"))
+	fmt.Println(subtitleStyle.Render("  </>      Adjust workers (concurrent requests)"))
 	fmt.Println()
 }
 

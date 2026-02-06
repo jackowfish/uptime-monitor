@@ -3,9 +3,10 @@
 A terminal-based HTTP endpoint monitor built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
 ## Screenshots
+<img width="1306" height="790" alt="uptime_monitor (Window) 2026-02-06 10:06 AM" src="https://github.com/user-attachments/assets/1057f953-6253-494a-93a1-5f39d7463522" />
+<img width="1306" height="790" alt="uptime_monitor (Window) 2026-02-06 10:07 AM" src="https://github.com/user-attachments/assets/b9f23204-eddb-46e2-ad25-69f0c7fcf1be" />
 
-<img width="835" height="499" alt="Screenshot 2026-01-29 at 9 43 09 AM" src="https://github.com/user-attachments/assets/0c74c1cc-e256-4854-8853-24d2582cc646" />
-<img width="834" height="499" alt="Screenshot 2026-01-29 at 9 43 20 AM" src="https://github.com/user-attachments/assets/cb7dd294-660d-43c5-8f37-c002e5794cbd" />
+
 
 ## Usage
 
